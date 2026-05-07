@@ -228,7 +228,7 @@
         <div style="display:flex; flex-direction:column; gap:10px; max-width:500px;">
             <input type="text" id="new-act-name" placeholder="Habit Name" style="padding:10px; border:1px solid #ddd; border-radius:6px;">
             <div style="display:flex; gap:10px;">
-                <input type="number" id="new-act-target" placeholder="Target Mins" style="padding:10px; border:1px solid #ddd; border-radius:6px; flex:1;">
+                <input type="number" id="new-act-target" placeholder="Target Mins" min="1" oninput="if(this.value<0)this.value=0;" onkeydown="if(event.key === '-' || event.key === 'e') return false;" style="padding:10px; border:1px solid #ddd; border-radius:6px; flex:1;">
                 <button class="mgmt-btn" style="background:var(--accent); color:white; border:none; padding:10px 20px;" onclick="addActivity()">+ Add</button>
             </div>
         </div>
@@ -284,9 +284,9 @@
         <div class="man-grid">
             <div class="man-card"><h4>👤 Identity & Rank</h4><p>Use the Profile tab to cement your identity. As you log total minutes, your rank badge will evolve from Initiate to Grandmaster.</p></div>
             <div class="man-card"><h4>🏗️ Architecture</h4><p>Define absolute targets (e.g., "Reading" for 45 mins). You must hit or exceed this target to earn a daily win.</p></div>
-            <div class="man-card"><h4>⏱️ Execution & Live Timers</h4><p>Use the Start timer for deep focus—it now ticks live. Or, manually type your minutes. Hit the target to trigger the dopamine hit and auditory chime.</p></div>
-            <div class="man-card"><h4>🏆 Perfect Days & Heatmap</h4><p>Hit all targets in a day to unlock the "Perfect Day" glow. Consistency unlocks streak multipliers, and your entire year is mapped in the Audit tab.</p></div>
-            <div class="man-card"><h4>💾 Backup & Security</h4><p>Your data lives safely in your browser. Use the <strong>Export Save</strong> button at the bottom to download a backup file of your progress. Use <strong>Import Save</strong> to restore it anytime.</p></div>
+            <div class="man-card"><h4>⏱️ Execution & Live Timers</h4><p>Use the Start timer for deep focus—it now ticks live. Or, manually type your minutes. Hit the target to trigger the auditory chime and confetti.</p></div>
+            <div class="man-card"><h4>🏆 Perfect Days & Heatmap</h4><p>Hit all targets in a day to unlock the "Perfect Day" glow. Consistency unlocks streak multipliers, mapped in the Audit tab.</p></div>
+            <div class="man-card"><h4>💾 Backup & Security</h4><p>Your data lives safely in your browser. Use the Export Save button in the Profile tab to download a backup file of your progress.</p></div>
             <div class="man-card" style="border-color:var(--accent);"><h4>🛠️ Creator</h4><p>This protocol was engineered by <strong>Surendra Singh</strong>. Have feedback? Reach out directly on WhatsApp at <a href="https://wa.me/919172365155" target="_blank" style="color:var(--accent); font-weight:bold;">+91 9172365155</a>.</p></div>
         </div>
     </div>
@@ -297,7 +297,7 @@
     </div>
 
     <script>
-        const MASTER_REGISTRY = 'mastery_final_protocol_v114'; 
+        const MASTER_REGISTRY = 'mastery_final_protocol_v115'; 
         let currentUserKey = ""; let masterLog = {}; let habits = []; let activeTimers = {}; let profilePhoto = ""; let stream = null;
         
         // Web Audio API for synthetic "Ding"
@@ -344,6 +344,7 @@
             }
         });
 
+        // Dynamic Scroll Calculation
         function scrollToToday() {
             const m = document.getElementById('today-marker');
             const headerWrap = document.querySelector('.sticky-wrapper');
@@ -509,6 +510,7 @@
                     const displayNote = e.note || (e.text ? e.text.replace(/\[\d+m\]\s*/, '') : "");
                     const isMetInit = displayMins >= h.target;
 
+                    // Daily Input with strict positive constraints
                     hml += `
                     <div class="habit-block" data-met="${isMetInit}">
                         <div class="habit-row">
@@ -516,298 +518,5 @@
                             <button class="timer-btn no-print" id="btn-${dk}-${h.key}" onclick="toggleTimer('${dk}','${h.key}')">Start</button>
                         </div>
                         <div class="input-row">
-                            <input type="number" class="time-input" id="m-${dk}-${h.key}" placeholder="Min" value="${displayMins}" oninput="updateTargetUI('${dk}','${h.key}', false)">
+                            <input type="number" class="time-input" id="m-${dk}-${h.key}" placeholder="Min" value="${displayMins}" min="0" oninput="if(this.value<0)this.value=0; updateTargetUI('${dk}','${h.key}', false)" onkeydown="if(event.key === '-' || event.key === 'e') return false;">
                             <input type="text" class="note-input" id="t-${dk}-${h.key}" placeholder="Add note..." value="${displayNote}" oninput="saveEntry('${dk}','${h.key}')">
-                        </div>
-                        <div class="target-status" style="font-size:0.55rem; margin-top:5px; font-weight:900; color:#b2bec3;"></div>
-                    </div>`; 
-                }); dc.innerHTML = hml; g.appendChild(dc); 
-                habits.forEach(h => updateTargetUI(dk, h.key, true)); 
-                updateDayProgress(dk);
-            } 
-            updateStreakDashboard(); renderAnnualTable(); setTimeout(() => { scrollToToday(); }, 300);
-        }
-
-        function saveEntry(dk, hk) { 
-            if (!currentUserKey) return; if (!masterLog[dk]) masterLog[dk] = {}; 
-            masterLog[dk][hk] = { 
-                checked: document.getElementById(`h-${dk}-${hk}`).checked, 
-                mins: parseInt(document.getElementById(`m-${dk}-${hk}`).value) || 0,
-                note: document.getElementById(`t-${dk}-${hk}`).value 
-            }; 
-            saveMaster(); updateStreakDashboard(); renderAnnualTable(); updateDayProgress(dk);
-        }
-
-        function saveMaster(dn) { 
-            if (!currentUserKey) return; 
-            const r = JSON.parse(localStorage.getItem(MASTER_REGISTRY) || '{}'); 
-            const headerNameEl = document.getElementById('header-name');
-            const dName = dn || (headerNameEl ? headerNameEl.innerText : "User");
-            r[currentUserKey] = { displayName: dName, log: masterLog, photo: profilePhoto, habits: habits }; 
-            localStorage.setItem(MASTER_REGISTRY, JSON.stringify(r)); 
-        }
-        
-        function updateStreakDashboard() {
-            const dash = document.getElementById('header-dashboard'); if(!dash) return; dash.innerHTML = '';
-            let globalMins = 0;
-            habits.forEach(h => {
-                let count = 0, total = 0; let d = new Date(); if (!(masterLog[yrMoDay(d)] && masterLog[yrMoDay(d)][h.key]?.checked)) d.setDate(d.getDate() - 1);
-                while (true) { let k = yrMoDay(d); let e = masterLog[k] && masterLog[k][h.key]; if (e && e.checked) { count++; d.setDate(d.getDate() - 1); } else break; }
-                Object.values(masterLog).forEach(day => { if (day[h.key]) total += (parseInt(day[h.key].mins) || extractLegacyMins(day[h.key].text) || 0); });
-                globalMins += total;
-                let sClass = count >= 100 ? "streak-diamond" : (count >= 30 ? "streak-gold" : (count >= 7 ? "streak-silver" : ""));
-                dash.innerHTML += `<div class="h-streak-card ${sClass}"><div class="h-streak-label">${h.label}</div><div class="streak-row"><div class="streak-stat"><span class="streak-num">${count}</span><span class="streak-sub">Days</span></div><div class="streak-stat"><span class="streak-num mins">${total}</span><span class="streak-sub">Mins</span></div></div></div>`;
-            });
-            updateRank(globalMins);
-        }
-
-        function updateRank(m) {
-            const b1 = document.getElementById('header-rank'); 
-            const b2 = document.getElementById('profile-rank-large');
-            let r = "Initiate", c = "rank-initiate";
-            if(m >= 10000) { r = "Grandmaster"; c = "rank-grandmaster"; } else if(m >= 5000) { r = "Master"; c = "rank-master"; } else if(m >= 2000) { r = "Voyager"; c = "rank-voyager"; } else if(m >= 500) { r = "Adept"; c = "rank-adept"; }
-            
-            if(b1) { b1.innerText = `${r} (${m}m)`; b1.className = `rank-badge ${c}`; b1.style.display = 'inline-block'; }
-            if(b2) { b2.innerText = `${r} (${m}m)`; b2.className = `rank-badge ${c}`; }
-        }
-
-        function updateTargetUI(dk, hk, init) { 
-            const h = habits.find(x => x.key === hk); const input = document.getElementById(`m-${dk}-${hk}`); if(!input) return; 
-            const m = parseInt(input.value) || 0; const met = m >= h.target; const b = input.closest('.habit-block'); const wasMet = b.dataset.met === "true";
-            if (met) { 
-                b.dataset.met = "true"; b.querySelector('.habit-row div').style.color = 'var(--success)'; b.querySelector('.target-status').innerText = '✓ TARGET MET'; 
-                if (!wasMet && !init) { 
-                    playDing(); fireConfetti(); 
-                    document.getElementById(`h-${dk}-${hk}`).checked = true; 
-                }
-            } else { b.dataset.met = "false"; b.querySelector('.habit-row div').style.color = 'inherit'; b.querySelector('.target-status').innerText = `GOAL: ${h.target} MINS`; } 
-            
-            if(!init) saveEntry(dk, hk);
-        }
-
-        function addActivity() { 
-            const n = document.getElementById('new-act-name').value.trim(); 
-            const t = parseInt(document.getElementById('new-act-target').value); 
-            
-            if (n && t > 0) { 
-                if (habits.some(h => h.label.toLowerCase() === n.toLowerCase())) {
-                    alert("A habit with this name already exists!");
-                    return;
-                }
-                habits.push({ key: 'h'+Date.now(), label: n, target: t }); 
-                saveMaster(); renderActivityManager(); createGrid(); 
-                document.getElementById('new-act-name').value = '';
-                document.getElementById('new-act-target').value = '';
-            } 
-        }
-
-        function openTab(tabId, btn) { 
-            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none'); 
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); 
-            document.getElementById(tabId).style.display = 'block'; 
-            btn.classList.add('active'); 
-            
-            if (tabId === 'annual-tab') renderAnnualTable(); 
-            if (tabId === 'tracker-tab') setTimeout(() => { scrollToToday(); }, 100);
-        }
-        
-        function editHabit(idx) {
-            const currentName = habits[idx].label;
-            const currentTarget = habits[idx].target;
-            
-            const newName = prompt("Edit habit name:", currentName);
-            if (newName === null) return;
-            const trimmedName = newName.trim();
-            if (!trimmedName) return;
-
-            if (trimmedName.toLowerCase() !== currentName.toLowerCase() && habits.some(h => h.label.toLowerCase() === trimmedName.toLowerCase())) {
-                alert("A habit with this name already exists!");
-                return;
-            }
-
-            const newTarget = prompt(`Edit target minutes for "${trimmedName}":`, currentTarget);
-            if (newTarget === null) return;
-            const parsedTarget = parseInt(newTarget);
-            if (isNaN(parsedTarget) || parsedTarget <= 0) {
-                alert("Invalid target minutes.");
-                return;
-            }
-
-            habits[idx].label = trimmedName;
-            habits[idx].target = parsedTarget;
-            
-            saveMaster();
-            renderActivityManager();
-            createGrid();
-            updateStreakDashboard();
-            renderAnnualTable();
-        }
-
-        function deleteHabit(idx) {
-            if (confirm(`WARNING: Deleting "${habits[idx].label}" will permanently remove it from your grid and heatmap history. Proceed?`)) {
-                habits.splice(idx, 1);
-                saveMaster();
-                renderActivityManager();
-                createGrid();
-            }
-        }
-
-        function renderActivityManager() { 
-            const c = document.getElementById('activity-tags'); if(!c) return; c.innerHTML = ''; 
-            habits.forEach((h, idx) => { 
-                c.innerHTML += `
-                <div style="background:#fff; border:1px solid var(--border); padding:15px; border-radius:10px; width:100%; box-sizing:border-box; display:flex; flex-direction:column; gap:12px; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <strong style="font-size:1.05rem; color:var(--text);">${h.label}</strong>
-                        <span style="background:var(--bg); padding:4px 8px; border-radius:6px; font-size:0.75rem; font-weight:bold; color:var(--accent);">${h.target} Mins</span>
-                    </div>
-                    <div style="display:flex; gap:8px;">
-                        <button class="mgmt-btn" style="flex:1; border-color:var(--accent); color:var(--accent);" onclick="editHabit(${idx})">✏️ Edit</button>
-                        <button class="mgmt-btn" style="flex:1; border-color:var(--stop); color:var(--stop);" onclick="deleteHabit(${idx})">🗑️ Delete</button>
-                    </div>
-                </div>`; 
-            }); 
-        }
-        
-        function toggleTimer(dk, hk) { 
-            const id = `${dk}-${hk}`; 
-            if (Object.keys(activeTimers).length > 0 && !activeTimers[id]) return; 
-            
-            const btn = document.getElementById(`btn-${id}`);
-            
-            if (!activeTimers[id]) { 
-                activeTimers[id] = { start: Date.now() }; 
-                btn.classList.add('running');
-                
-                activeTimers[id].interval = setInterval(() => {
-                    const elapsed = Math.floor((Date.now() - activeTimers[id].start) / 1000);
-                    const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
-                    const secs = String(elapsed % 60).padStart(2, '0');
-                    btn.innerText = `Stop (${mins}:${secs})`;
-                }, 1000);
-                
-            } else { 
-                clearInterval(activeTimers[id].interval);
-                const m = Math.floor((Date.now() - activeTimers[id].start)/60000); 
-                const input = document.getElementById(`m-${id}`); 
-                input.value = (parseInt(input.value) || 0) + m; 
-                delete activeTimers[id]; 
-                
-                btn.innerText = "Start"; 
-                btn.classList.remove('running'); 
-                updateTargetUI(dk, hk, false); 
-            } 
-        }
-
-        async function openCamera() { 
-            const m = document.getElementById('camera-modal'); 
-            const v = document.getElementById('video-preview'); 
-            m.style.display = 'flex'; 
-            try { 
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } }); 
-                v.srcObject = stream; 
-            } catch (e) { 
-                alert("Camera Access Denied."); closeCamera(); 
-            } 
-        }
-        function closeCamera() { 
-            if (stream) stream.getTracks().forEach(t => t.stop()); 
-            document.getElementById('camera-modal').style.display = 'none'; 
-        }
-        function takeSnapshot() { 
-            const c = document.getElementById('snapshot-canvas'); 
-            const v = document.getElementById('video-preview'); 
-            c.width = v.videoWidth; c.height = v.videoHeight; 
-            c.getContext('2d').translate(c.width, 0); 
-            c.getContext('2d').scale(-1, 1); 
-            c.getContext('2d').drawImage(v, 0, 0); 
-            profilePhoto = c.toDataURL('image/png'); 
-            
-            const hAvatar = document.getElementById('header-avatar'); if(hAvatar) hAvatar.src = profilePhoto;
-            const lAvatar = document.getElementById('profile-avatar-large'); if(lAvatar) lAvatar.src = profilePhoto; 
-            
-            saveMaster(); closeCamera(); 
-        }
-        function handleImageUpload(e) { 
-            const r = new FileReader(); 
-            r.onload = (ev) => { 
-                profilePhoto = ev.target.result; 
-                const hAvatar = document.getElementById('header-avatar'); if(hAvatar) hAvatar.src = profilePhoto;
-                const lAvatar = document.getElementById('profile-avatar-large'); if(lAvatar) lAvatar.src = profilePhoto; 
-                saveMaster(); 
-            }; 
-            r.readAsDataURL(e.target.files[0]); 
-        }
-
-        function exportData() {
-            const data = localStorage.getItem(MASTER_REGISTRY);
-            if (!data || data === '{}') return alert("No tracking data available to export.");
-            const blob = new Blob([data], {type: "application/json"});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; 
-            a.download = `Mastery365_Backup_${new Date().toISOString().slice(0,10)}.json`;
-            a.click(); 
-            URL.revokeObjectURL(url);
-        }
-        
-        function importData(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                try {
-                    const data = JSON.parse(ev.target.result);
-                    localStorage.setItem(MASTER_REGISTRY, JSON.stringify(data));
-                    alert("Backup restored successfully. The protocol will now reload.");
-                    location.reload();
-                } catch(err) { 
-                    alert("Invalid backup file. Restoration failed."); 
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        function renderProfileList() { 
-            const r = JSON.parse(localStorage.getItem(MASTER_REGISTRY) || '{}'); 
-            const s1 = document.getElementById('profile-directory'); 
-            const s2 = document.getElementById('lock-profile-select');
-            
-            let html = '<option value="">-- Select Profile --</option>'; 
-            Object.keys(r).forEach(k => { html += `<option value="${k}">${r[k].displayName || k}</option>`; }); 
-            
-            if(s1) s1.innerHTML = html;
-            if(s2) s2.innerHTML = html;
-        }
-        
-        function renameCurrentProfile() { 
-            const r = JSON.parse(localStorage.getItem(MASTER_REGISTRY)); 
-            const n = prompt("New name:", r[currentUserKey].displayName); 
-            if(n && n.trim()){ 
-                const nk = n.toLowerCase().trim(); 
-                r[nk] = r[currentUserKey]; 
-                r[nk].displayName = n.trim(); 
-                if(nk !== currentUserKey) delete r[currentUserKey]; 
-                localStorage.setItem(MASTER_REGISTRY, JSON.stringify(r)); 
-                switchProfile(nk, true); 
-                renderProfileList(); 
-            } 
-        }
-        function deleteSelectedProfile() { 
-            const r = JSON.parse(localStorage.getItem(MASTER_REGISTRY) || '{}'); 
-            if (confirm(`Delete profile?`)) { 
-                delete r[currentUserKey]; 
-                localStorage.setItem(MASTER_REGISTRY, JSON.stringify(r)); 
-                lockSystem(); 
-                renderProfileList(); 
-            } 
-        }
-        function clearData() { 
-            if (confirm("Wipe all?")) { 
-                localStorage.removeItem(MASTER_REGISTRY); 
-                location.reload(); 
-            } 
-        }
-    </script>
-</body>
-</html>
