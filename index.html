@@ -47,7 +47,7 @@
 
         .top-bar { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         
-        .user-identity-mini { display: flex; align-items: center; gap: 10px; }
+        .user-identity-mini { display: flex; align-items: center; gap: 10px; transition: 0.2s; }
         .avatar-mini { width: 42px; height: 42px; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover; background: #ecf0f1; }
         .user-text-mini { display: flex; flex-direction: column; justify-content: center; }
         .name-mini { font-size: 1.1rem; font-weight: 900; color: var(--accent); margin: 0; line-height: 1.1; }
@@ -59,7 +59,7 @@
         .rank-master { background: #f3e5f5; color: #6a1b9a; }
         .rank-grandmaster { background: #fff8e1; color: #f57f17; border: 1px solid #fbc02d; box-shadow: 0 0 8px rgba(251, 192, 45, 0.4); }
 
-        #month-picker { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-weight: bold; font-size: 0.8rem; cursor: pointer; background: #f8f9fa; }
+        #month-picker { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-weight: bold; font-size: 0.8rem; cursor: pointer; background: #f8f9fa; transition: 0.2s; }
 
         .dashboard-slot { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
         .dashboard-slot::-webkit-scrollbar { display: none; }
@@ -103,7 +103,6 @@
         
         .input-row { display: flex; gap: 6px; align-items: center; margin-top: 5px; }
         
-        /* EXACT MINS WIDTH & FONT SIZE */
         .time-input { 
             width: 75px; height: 34px; border: 1px solid #dfe6e9; border-radius: 6px; 
             font-size: 0.85rem; padding: 0 4px; box-sizing: border-box; text-align: center; 
@@ -181,7 +180,7 @@
     <div class="sticky-wrapper">
         <div class="header-panel">
             <div class="top-bar no-print">
-                <div class="user-identity-mini">
+                <div class="user-identity-mini" id="header-identity">
                     <img id="header-avatar" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" class="avatar-mini" alt=" ">
                     <div class="user-text-mini">
                         <div id="header-name" class="name-mini"></div>
@@ -284,9 +283,10 @@
         </div>
         <div class="man-grid">
             <div class="man-card"><h4>👤 Identity & Rank</h4><p>Use the Profile tab to cement your identity. As you log total minutes, your rank badge will evolve from Initiate to Grandmaster.</p></div>
-            <div class="man-card"><h4>⏱️ Timers & Logging</h4><p>Use the Start timer for deep focus—it ticks live. Or manually type your minutes. Hit the target to trigger the auditory chime and confetti.</p></div>
-            <div class="man-card"><h4>🏆 Perfect Days</h4><p>Hit all targets in a day to unlock the "Perfect Day" glow. Consistency unlocks streak multipliers, mapped in the Audit tab.</p></div>
-            <div class="man-card"><h4>💾 Security</h4><p>Your data lives safely in your browser. Use the Export Save button in the Profile tab to download a backup file of your progress.</p></div>
+            <div class="man-card"><h4>🏗️ Architecture</h4><p>Define absolute targets (e.g., "Reading" for 45 mins). You must hit or exceed this target to earn a daily win.</p></div>
+            <div class="man-card"><h4>⏱️ Execution & Live Timers</h4><p>Use the Start timer for deep focus—it now ticks live. Or, manually type your minutes. Hit the target to trigger the dopamine hit and auditory chime.</p></div>
+            <div class="man-card"><h4>🏆 Perfect Days & Heatmap</h4><p>Hit all targets in a day to unlock the "Perfect Day" glow. Consistency unlocks streak multipliers, and your entire year is mapped in the Audit tab.</p></div>
+            <div class="man-card"><h4>💾 Backup & Security</h4><p>Your data lives safely in your browser. Use the <strong>Export Save</strong> button at the bottom to download a backup file of your progress. Use <strong>Import Save</strong> to restore it anytime.</p></div>
             <div class="man-card" style="border-color:var(--accent);"><h4>🛠️ Creator</h4><p>This protocol was engineered by <strong>Surendra Singh</strong>. Have feedback? Reach out directly on WhatsApp at <a href="https://wa.me/919172365155" target="_blank" style="color:var(--accent); font-weight:bold;">+91 9172365155</a>.</p></div>
         </div>
     </div>
@@ -297,7 +297,7 @@
     </div>
 
     <script>
-        const MASTER_REGISTRY = 'mastery_final_protocol_v113'; 
+        const MASTER_REGISTRY = 'mastery_final_protocol_v114'; 
         let currentUserKey = ""; let masterLog = {}; let habits = []; let activeTimers = {}; let profilePhoto = ""; let stream = null;
         
         // Web Audio API for synthetic "Ding"
@@ -360,7 +360,8 @@
         }
 
         function init() { 
-            const now = new Date(); document.getElementById('month-picker').value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+            const now = new Date(); 
+            document.getElementById('month-picker').value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
             renderProfileList(); 
             const lastKey = localStorage.getItem('last_active_user_key'); 
             if (lastKey) switchProfile(lastKey, true);
@@ -388,42 +389,47 @@
             currentUserKey = k.toLowerCase(); localStorage.setItem('last_active_user_key', currentUserKey);
             masterLog = d.log || {}; habits = d.habits || [{key:'m', label:'Focus Work', target:30}]; profilePhoto = d.photo || "";
             
-            document.getElementById('profile-directory').value = currentUserKey;
-            document.getElementById('lock-profile-select').value = currentUserKey;
+            const p1 = document.getElementById('profile-directory'); if (p1) p1.value = currentUserKey;
+            const p2 = document.getElementById('lock-profile-select'); if (p2) p2.value = currentUserKey;
             
-            document.getElementById('header-name').innerText = d.displayName;
-            document.getElementById('header-avatar').src = profilePhoto || "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+            const hName = document.getElementById('header-name'); if (hName) hName.innerText = d.displayName;
+            const hAvatar = document.getElementById('header-avatar'); if (hAvatar) hAvatar.src = profilePhoto || "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
             
-            document.getElementById('profile-name-large').innerText = d.displayName;
-            document.getElementById('profile-avatar-large').src = profilePhoto || "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+            const lName = document.getElementById('profile-name-large'); if (lName) lName.innerText = d.displayName;
+            const lAvatar = document.getElementById('profile-avatar-large'); if (lAvatar) lAvatar.src = profilePhoto || "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
             
             unlockSystem(); 
             if (!silent) showStatus(`Synced`, 'var(--success)');
             
-            document.querySelector('.tab-btn').click();
+            const firstTab = document.querySelector('.tab-btn');
+            if (firstTab) firstTab.click();
         }
 
         function lockSystem() {
             currentUserKey = ""; 
-            document.getElementById('main-tabs').classList.remove('unlocked');
-            document.getElementById('lock-screen').style.display = 'block';
+            const mainTabs = document.getElementById('main-tabs'); if (mainTabs) mainTabs.classList.remove('unlocked');
+            const lockScreen = document.getElementById('lock-screen'); if (lockScreen) lockScreen.style.display = 'block';
             
             document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-            document.getElementById('header-dashboard').style.display = 'none';
-            document.querySelector('.user-identity-mini').style.visibility = 'hidden';
             
-            document.getElementById('jump-today-btn').style.display = 'none';
-            document.getElementById('lock-profile-select').value = "";
+            const hDash = document.getElementById('header-dashboard'); if (hDash) hDash.style.display = 'none';
+            const hId = document.getElementById('header-identity'); if (hId) hId.style.visibility = 'hidden';
+            const mPicker = document.getElementById('month-picker'); if (mPicker) mPicker.style.visibility = 'hidden';
+            
+            const jBtn = document.getElementById('jump-today-btn'); if (jBtn) jBtn.style.display = 'none';
+            const lps = document.getElementById('lock-profile-select'); if (lps) lps.value = "";
         }
 
         function unlockSystem() {
-            document.getElementById('main-tabs').classList.add('unlocked');
-            document.getElementById('lock-screen').style.display = 'none';
+            const mainTabs = document.getElementById('main-tabs'); if (mainTabs) mainTabs.classList.add('unlocked');
+            const lockScreen = document.getElementById('lock-screen'); if (lockScreen) lockScreen.style.display = 'none';
             
-            document.getElementById('header-dashboard').style.display = 'flex';
-            document.querySelector('.user-identity-mini').style.visibility = 'visible';
+            const hDash = document.getElementById('header-dashboard'); if (hDash) hDash.style.display = 'flex';
+            const hId = document.getElementById('header-identity'); if (hId) hId.style.visibility = 'visible';
+            const mPicker = document.getElementById('month-picker'); if (mPicker) mPicker.style.visibility = 'visible';
             
-            document.getElementById('rank-badge').style.display = 'inline-block';
+            const hRank = document.getElementById('header-rank'); if (hRank) hRank.style.display = 'inline-block';
+            
             renderActivityManager(); createGrid(); 
         }
 
@@ -434,7 +440,7 @@
         }
 
         function renderAnnualTable() { 
-            const t = document.getElementById('annual-table'); 
+            const t = document.getElementById('annual-table'); if(!t) return;
             const [selYr, selMo] = document.getElementById('month-picker').value.split('-').map(Number);
             const now = new Date(selYr, selMo - 1, 1);
             t.innerHTML = `<tr><th style="width:120px;">Habit</th>${Array.from({length:31}, (_,i)=>`<th>${i+1}</th>`).join('')}</tr>`; 
@@ -487,7 +493,7 @@
         }
 
         function createGrid() { 
-            const g = document.getElementById('grid'); const monthVal = document.getElementById('month-picker').value; g.innerHTML = ''; if (!monthVal || !currentUserKey) return; 
+            const g = document.getElementById('grid'); const monthVal = document.getElementById('month-picker').value; if(!g) return; g.innerHTML = ''; if (!monthVal || !currentUserKey) return; 
             const [yr, mo] = monthVal.split('-').map(Number); const dCount = new Date(yr, mo, 0).getDate(); const todayKey = yrMoDay(new Date());
             
             for (let i = 1; i <= dCount; i++) { 
@@ -532,10 +538,17 @@
             saveMaster(); updateStreakDashboard(); renderAnnualTable(); updateDayProgress(dk);
         }
 
-        function saveMaster(dn) { if (!currentUserKey) return; const r = JSON.parse(localStorage.getItem(MASTER_REGISTRY) || '{}'); r[currentUserKey] = { displayName: dn || document.getElementById('current-user-name').innerText, log: masterLog, photo: profilePhoto, habits: habits }; localStorage.setItem(MASTER_REGISTRY, JSON.stringify(r)); }
+        function saveMaster(dn) { 
+            if (!currentUserKey) return; 
+            const r = JSON.parse(localStorage.getItem(MASTER_REGISTRY) || '{}'); 
+            const headerNameEl = document.getElementById('header-name');
+            const dName = dn || (headerNameEl ? headerNameEl.innerText : "User");
+            r[currentUserKey] = { displayName: dName, log: masterLog, photo: profilePhoto, habits: habits }; 
+            localStorage.setItem(MASTER_REGISTRY, JSON.stringify(r)); 
+        }
         
         function updateStreakDashboard() {
-            const dash = document.getElementById('header-dashboard'); dash.innerHTML = '';
+            const dash = document.getElementById('header-dashboard'); if(!dash) return; dash.innerHTML = '';
             let globalMins = 0;
             habits.forEach(h => {
                 let count = 0, total = 0; let d = new Date(); if (!(masterLog[yrMoDay(d)] && masterLog[yrMoDay(d)][h.key]?.checked)) d.setDate(d.getDate() - 1);
@@ -554,7 +567,7 @@
             let r = "Initiate", c = "rank-initiate";
             if(m >= 10000) { r = "Grandmaster"; c = "rank-grandmaster"; } else if(m >= 5000) { r = "Master"; c = "rank-master"; } else if(m >= 2000) { r = "Voyager"; c = "rank-voyager"; } else if(m >= 500) { r = "Adept"; c = "rank-adept"; }
             
-            b1.innerText = `${r} (${m}m)`; b1.className = `rank-badge ${c}`; b1.style.display = 'inline-block';
+            if(b1) { b1.innerText = `${r} (${m}m)`; b1.className = `rank-badge ${c}`; b1.style.display = 'inline-block'; }
             if(b2) { b2.innerText = `${r} (${m}m)`; b2.className = `rank-badge ${c}`; }
         }
 
@@ -640,7 +653,7 @@
         }
 
         function renderActivityManager() { 
-            const c = document.getElementById('activity-tags'); c.innerHTML = ''; 
+            const c = document.getElementById('activity-tags'); if(!c) return; c.innerHTML = ''; 
             habits.forEach((h, idx) => { 
                 c.innerHTML += `
                 <div style="background:#fff; border:1px solid var(--border); padding:15px; border-radius:10px; width:100%; box-sizing:border-box; display:flex; flex-direction:column; gap:12px; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
@@ -710,8 +723,8 @@
             c.getContext('2d').drawImage(v, 0, 0); 
             profilePhoto = c.toDataURL('image/png'); 
             
-            document.getElementById('header-avatar').src = profilePhoto;
-            document.getElementById('profile-avatar-large').src = profilePhoto; 
+            const hAvatar = document.getElementById('header-avatar'); if(hAvatar) hAvatar.src = profilePhoto;
+            const lAvatar = document.getElementById('profile-avatar-large'); if(lAvatar) lAvatar.src = profilePhoto; 
             
             saveMaster(); closeCamera(); 
         }
@@ -719,8 +732,8 @@
             const r = new FileReader(); 
             r.onload = (ev) => { 
                 profilePhoto = ev.target.result; 
-                document.getElementById('header-avatar').src = profilePhoto;
-                document.getElementById('profile-avatar-large').src = profilePhoto; 
+                const hAvatar = document.getElementById('header-avatar'); if(hAvatar) hAvatar.src = profilePhoto;
+                const lAvatar = document.getElementById('profile-avatar-large'); if(lAvatar) lAvatar.src = profilePhoto; 
                 saveMaster(); 
             }; 
             r.readAsDataURL(e.target.files[0]); 
@@ -763,13 +776,38 @@
             let html = '<option value="">-- Select Profile --</option>'; 
             Object.keys(r).forEach(k => { html += `<option value="${k}">${r[k].displayName || k}</option>`; }); 
             
-            s1.innerHTML = html;
-            s2.innerHTML = html;
+            if(s1) s1.innerHTML = html;
+            if(s2) s2.innerHTML = html;
         }
         
-        function renameCurrentProfile() { const r = JSON.parse(localStorage.getItem(MASTER_REGISTRY)); const n = prompt("New name:", r[currentUserKey].displayName); if(n && n.trim()){ const nk = n.toLowerCase().trim(); r[nk] = r[currentUserKey]; r[nk].displayName = n.trim(); if(nk !== currentUserKey) delete r[currentUserKey]; localStorage.setItem(MASTER_REGISTRY, JSON.stringify(r)); switchProfile(nk, true); renderProfileList(); } }
-        function deleteSelectedProfile() { const r = JSON.parse(localStorage.getItem(MASTER_REGISTRY) || '{}'); if (confirm(`Delete profile?`)) { delete r[currentUserKey]; localStorage.setItem(MASTER_REGISTRY, JSON.stringify(r)); lockSystem(); renderProfileList(); } }
-        function clearData() { if (confirm("Wipe all?")) { localStorage.removeItem(MASTER_REGISTRY); location.reload(); } }
+        function renameCurrentProfile() { 
+            const r = JSON.parse(localStorage.getItem(MASTER_REGISTRY)); 
+            const n = prompt("New name:", r[currentUserKey].displayName); 
+            if(n && n.trim()){ 
+                const nk = n.toLowerCase().trim(); 
+                r[nk] = r[currentUserKey]; 
+                r[nk].displayName = n.trim(); 
+                if(nk !== currentUserKey) delete r[currentUserKey]; 
+                localStorage.setItem(MASTER_REGISTRY, JSON.stringify(r)); 
+                switchProfile(nk, true); 
+                renderProfileList(); 
+            } 
+        }
+        function deleteSelectedProfile() { 
+            const r = JSON.parse(localStorage.getItem(MASTER_REGISTRY) || '{}'); 
+            if (confirm(`Delete profile?`)) { 
+                delete r[currentUserKey]; 
+                localStorage.setItem(MASTER_REGISTRY, JSON.stringify(r)); 
+                lockSystem(); 
+                renderProfileList(); 
+            } 
+        }
+        function clearData() { 
+            if (confirm("Wipe all?")) { 
+                localStorage.removeItem(MASTER_REGISTRY); 
+                location.reload(); 
+            } 
+        }
     </script>
 </body>
 </html>
