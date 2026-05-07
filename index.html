@@ -62,7 +62,7 @@
         #month-picker { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-weight: bold; font-size: 0.8rem; cursor: pointer; background: #f8f9fa; }
 
         .dashboard-slot { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
-        .dashboard-slot::-webkit-scrollbar { display: none; } /* Hide scrollbar for clean look */
+        .dashboard-slot::-webkit-scrollbar { display: none; }
         .h-streak-card { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; text-align: center; min-width: 100px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; }
         
         .streak-silver { border-color: #bdc3c7; box-shadow: 0 0 8px rgba(189, 195, 199, 0.4); }
@@ -103,7 +103,7 @@
         
         .input-row { display: flex; gap: 6px; align-items: center; margin-top: 5px; }
         
-        /* ADJUSTED MINS WIDTH & FONT SIZE */
+        /* EXACT MINS WIDTH & FONT SIZE */
         .time-input { 
             width: 75px; height: 34px; border: 1px solid #dfe6e9; border-radius: 6px; 
             font-size: 0.85rem; padding: 0 4px; box-sizing: border-box; text-align: center; 
@@ -297,7 +297,7 @@
     </div>
 
     <script>
-        const MASTER_REGISTRY = 'mastery_final_protocol_v112'; 
+        const MASTER_REGISTRY = 'mastery_final_protocol_v113'; 
         let currentUserKey = ""; let masterLog = {}; let habits = []; let activeTimers = {}; let profilePhoto = ""; let stream = null;
         
         // Web Audio API for synthetic "Ding"
