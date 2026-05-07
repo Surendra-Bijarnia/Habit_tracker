@@ -62,7 +62,7 @@
         #month-picker { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-weight: bold; font-size: 0.8rem; cursor: pointer; background: #f8f9fa; }
 
         .dashboard-slot { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
-        .dashboard-slot::-webkit-scrollbar { display: none; } /* Hide scrollbar for clean look */
+        .dashboard-slot::-webkit-scrollbar { display: none; } 
         .h-streak-card { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; text-align: center; min-width: 100px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; }
         
         .streak-silver { border-color: #bdc3c7; box-shadow: 0 0 8px rgba(189, 195, 199, 0.4); }
@@ -83,8 +83,8 @@
         .tab-btn { flex: 1; padding: 10px 4px; border: 1px solid rgba(223, 230, 233, 0.6); border-bottom: none; background: rgba(223, 230, 233, 0.4); cursor: pointer; font-size: 0.7rem; border-radius: 8px 8px 0 0; font-weight: bold; color: #636e72; min-width: 65px; white-space: nowrap; text-align: center; }
         .tab-btn.active { background: var(--card); color: var(--accent); z-index: 2; border-bottom: 2px solid var(--card); margin-bottom: -1px; }
 
-        .tab-content { width: 100%; max-width: 1600px; background: var(--card); padding: 20px; border-radius: 0 12px 12px 12px; border: 1px solid rgba(223, 230, 233, 0.6); box-shadow: 0 4px 6px rgba(0,0,0,0.05); box-sizing: border-box; margin-bottom: 20px; }
-        .tab-content:not(.active) { display: none; }
+        .tab-content { display: none; width: 100%; max-width: 1600px; background: var(--card); padding: 20px; border-radius: 0 12px 12px 12px; border: 1px solid rgba(223, 230, 233, 0.6); box-shadow: 0 4px 6px rgba(0,0,0,0.05); box-sizing: border-box; margin-bottom: 20px; }
+        .tab-content.active { display: block; }
 
         /* Grid & Inputs */
         .calendar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; width: 100%; align-items: start; }
@@ -153,7 +153,7 @@
         @media print {
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             .no-print, .tabs, .page-title, button, select, input, .app-footer { display: none !important; }
-            #tracker-tab, #manager-tab, #manual-tab, #profile-tab { display: none !important; }
+            .tab-content { display: none !important; }
             #annual-tab { display: block !important; border: none !important; box-shadow: none !important; padding: 0 !important; }
             .sticky-wrapper { position: relative !important; display: block !important; padding: 0 !important; background: none !important; }
             .header-panel { box-shadow: none !important; border: none !important; border-bottom: 3px solid #000 !important; }
@@ -181,7 +181,7 @@
     <div class="sticky-wrapper">
         <div class="header-panel">
             <div class="top-bar no-print">
-                <div class="user-identity-mini">
+                <div class="user-identity-mini" style="visibility:hidden;">
                     <img id="header-avatar" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" class="avatar-mini" alt=" ">
                     <div class="user-text-mini">
                         <div id="header-name" class="name-mini"></div>
@@ -191,7 +191,7 @@
                 <input type="month" id="month-picker" onchange="createGrid();">
             </div>
 
-            <div id="header-dashboard" class="dashboard-slot no-print"></div>
+            <div id="header-dashboard" class="dashboard-slot no-print" style="display:none;"></div>
         </div>
 
         <div class="tabs no-print" id="main-tabs">
@@ -203,7 +203,7 @@
         </div>
     </div>
 
-    <div id="lock-screen" style="padding:40px 15px; text-align:center; color:#636e72; background:var(--card); border-radius:12px; margin-top:20px; border:1px solid var(--border);">
+    <div id="lock-screen" style="padding:40px 15px; text-align:center; color:#636e72; background:var(--card); border-radius:12px; margin-top:20px; border:1px solid var(--border); display:none;">
         <div style="font-size:3rem; margin-bottom:10px; opacity:0.3;">🔒</div>
         <h3 style="margin:0 0 15px 0; color:var(--text);">System Locked</h3>
         <p style="margin:0 0 20px 0; font-size:0.9rem;">Select or create a profile to initialize your protocol.</p>
@@ -215,7 +215,7 @@
         </div>
     </div>
 
-    <div id="tracker-tab" class="tab-content active">
+    <div id="tracker-tab" class="tab-content">
         <div class="calendar-grid" id="grid"></div>
     </div>
 
@@ -300,7 +300,6 @@
         const MASTER_REGISTRY = 'mastery_final_protocol_v111'; 
         let currentUserKey = ""; let masterLog = {}; let habits = []; let activeTimers = {}; let profilePhoto = ""; let stream = null;
         
-        // Web Audio API for synthetic "Ding"
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx;
         function playDing() {
@@ -344,7 +343,6 @@
             }
         });
 
-        // Dynamic Scroll Calculation to exactly hit the bottom of the sticky header
         function scrollToToday() {
             const m = document.getElementById('today-marker');
             const headerWrap = document.querySelector('.sticky-wrapper');
@@ -389,23 +387,19 @@
             currentUserKey = k.toLowerCase(); localStorage.setItem('last_active_user_key', currentUserKey);
             masterLog = d.log || {}; habits = d.habits || [{key:'m', label:'Focus Work', target:30}]; profilePhoto = d.photo || "";
             
-            // Sync Dropdowns
             document.getElementById('profile-directory').value = currentUserKey;
             document.getElementById('lock-profile-select').value = currentUserKey;
             
-            // Sync Minimal Header
             document.getElementById('header-name').innerText = d.displayName;
             document.getElementById('header-avatar').src = profilePhoto || "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
             
-            // Sync Settings Profile Tab
             document.getElementById('profile-name-large').innerText = d.displayName;
             document.getElementById('profile-avatar-large').src = profilePhoto || "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
             
             unlockSystem(); 
             if (!silent) showStatus(`Synced`, 'var(--success)');
             
-            // Open Tracker by default when switching
-            document.querySelector('.tab-btn').click();
+            openTab('tracker-tab', document.querySelector('.tab-btn'));
         }
 
         function lockSystem() {
@@ -413,10 +407,8 @@
             document.getElementById('main-tabs').classList.remove('unlocked');
             document.getElementById('lock-screen').style.display = 'block';
             
-            // Hide Tabs Content
-            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             
-            // Hide Header specific elements
             document.getElementById('header-dashboard').style.display = 'none';
             document.querySelector('.user-identity-mini').style.visibility = 'hidden';
             
@@ -431,7 +423,7 @@
             document.getElementById('header-dashboard').style.display = 'flex';
             document.querySelector('.user-identity-mini').style.visibility = 'visible';
             
-            document.getElementById('rank-badge').style.display = 'inline-block';
+            document.getElementById('header-rank').style.display = 'inline-block';
             renderActivityManager(); createGrid(); 
         }
 
@@ -562,7 +554,7 @@
             let r = "Initiate", c = "rank-initiate";
             if(m >= 10000) { r = "Grandmaster"; c = "rank-grandmaster"; } else if(m >= 5000) { r = "Master"; c = "rank-master"; } else if(m >= 2000) { r = "Voyager"; c = "rank-voyager"; } else if(m >= 500) { r = "Adept"; c = "rank-adept"; }
             
-            b1.innerText = `${r} (${m}m)`; b1.className = `rank-badge ${c}`; b1.style.display = 'inline-block';
+            if(b1) { b1.innerText = `${r} (${m}m)`; b1.className = `rank-badge ${c}`; b1.style.display = 'inline-block'; }
             if(b2) { b2.innerText = `${r} (${m}m)`; b2.className = `rank-badge ${c}`; }
         }
 
@@ -583,10 +575,10 @@
         function addActivity() { const n = document.getElementById('new-act-name').value; const t = parseInt(document.getElementById('new-act-target').value); if (n && t) { habits.push({ key: 'h'+Date.now(), label: n, target: t }); saveMaster(); renderActivityManager(); createGrid(); } }
         
         function openTab(tabId, btn) { 
-            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none'); 
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); 
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); 
-            document.getElementById(tabId).style.display = 'block'; 
-            btn.classList.add('active'); 
+            document.getElementById(tabId).classList.add('active'); 
+            if(btn) btn.classList.add('active'); 
             
             if (tabId === 'annual-tab') renderAnnualTable(); 
             if (tabId === 'tracker-tab') setTimeout(() => { scrollToToday(); }, 100);
